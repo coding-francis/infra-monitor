@@ -1,0 +1,51 @@
+groups:
+- name: Alerts
+  rules:
+  # Alert for any instance that is unreachable
+  - alert: ServiceDown
+    expr: up == 0
+    for: 0m
+    labels:
+      severity: page
+    annotations:
+      description: "{{ $labels.job }} is down"
+
+  # Alert for any instance that is under high load
+  - alert:  HighLoad
+    expr: node_load1 > 0.5
+    for:  1m
+    labels:
+      severity: critical
+    annotations:
+      summary:  "Instance {{ $labels.instance }} under high load"
+      description: "{{ $labels.instance }} of job {{ $labels.job }} is under high load"
+
+  # Alert for any instance that has a median request latency >1s.
+  - alert: APIHighRequestLatency
+    expr: api_http_request_latencies_second{quantile="0.5"} > 1
+    for: 1m
+    labels:
+      severity: page
+    annotations:
+      summary: "High request latency on {{ $labels.instance }}"
+      description: "{{ $labels.instance }} has a median request latency above 1s (current value: {{ $value }}s)"
+
+  # Alert for low disk space
+  - alert: DiskSpaceFree10Percent
+    expr: node_filesystem_free_percent <= 10
+    labels:
+      severity: warning
+    annotations:
+      summary: "Instance [{{ $labels.instance }}] has 10% or less Free disk space"
+      description: "[{{ $labels.instance }}] has only {{ $value }}% or less free."
+
+- name: cpu_usage_alerts
+  rules:
+    - alert: HighCpuUsage
+      expr: (1 - avg(irate(node_cpu_seconds_total{mode="idle"}[1m])) by (instance)) * 100 > 10
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "High CPU usage on {{ $labels.instance }}"
+        description: "CPU usage is above 80% for more than 5 minutes."

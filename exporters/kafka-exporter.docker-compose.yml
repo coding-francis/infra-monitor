@@ -1,0 +1,6 @@
+services:
+  kafka-exporter:
+    image: danielqsj/kafka-exporter 
+    command: ["--kafka.server=kafka:9092", "[--kafka.server=another-server ...]"]
+    ports:
+      - 9308:9308

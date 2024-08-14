@@ -1,0 +1,21 @@
+version: '3'
+services:
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alert-manager
+    ports:
+      - 9093:9093
+    env_file: .env
+    volumes:
+      - /tmp:/data
+      - /config:/config
+    environment:
+      - MAIL_SENDER_USERNAME=${MAIL_SENDER_USERNAME}
+      - MAIL_SENDER_PASSWORD=${MAIL_SENDER_PASSWORD}
+      - MAIL_SMARTHOST=${MAIL_SMARTHOST}
+    command: --config.file=/config/alertmanager.yml --log.level=debug
+    restart: on-failure
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3

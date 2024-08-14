@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  node-exporter:
+    image: prom/node-exporter
+    container_name: node-exporter
+    ports:
+      - 9100:9100
+    restart: on-failure
+    networks:
+      - monitoring-network
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alert-manager
+    ports:
+      - 9093:9093
+    volumes:
+      - ./alert-manager/tmp:/data
+      - ./alert-manager/config:/config
+    environment:
+      - MAIL_SENDER_USERNAME=${MAIL_SENDER_EMAIL}
+      - MAIL_SENDER_PASSWORD=${MAIL_SENDER_PASSWORD}
+      - MAIL_SMARTHOST=${MAIL_SMARTHOST}
+    command: --config.file=/config/alertmanager.yml --log.level=debug
+    restart: on-failure
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - 3000:3000
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+      - GF_DATABASE_TYPE=postgres
+      - GF_DATABASE_HOST=${GF_DATABASE_HOST}
+      - GF_DATABASE_USER=${GF_DATABASE_USER}
+      - GF_DATABASE_PASSWORD=${GF_DATABASE_PASSWORD}
+      - GF_DATABASE_NAME=grafana
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=${GF_SMTP_HOST}
+      - GF_SMTP_USER=${GF_SMTP_USER}
+      - GF_SMTP_PASSWORD=${GF_SMTP_PASSWORD}
+      - GF_SMTP_SKIP_VERIFY=false
+      - GF_SMTP_FROM_NAME=AmaliTech Grafana
+      - GF_SMTP_FROM_ADDRESS=${GF_SMTP_USER}
+    restart: on-failure
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring-network
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - 9090:9090
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/scrape-configs:/etc/prometheus/scrape-configs
+      - prometheus-data:/prometheus
+    restart: on-failure
+    networks:
+      - monitoring-network
+
+networks:
+  monitoring-network:
+    driver: bridge
+
+volumes:
+  grafana_data:
+  prometheus-data:

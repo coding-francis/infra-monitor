@@ -1,0 +1,43 @@
+global:
+  resolve_timeout: 2m
+  smtp_smarthost: ${MAIL_SMARTHOST}
+  smtp_from: ${MAIL_SENDER_EMAIL}
+  smtp_auth_username: ${MAIL_SENDER_EMAIL}
+  smtp_auth_password: ${MAIL_SENDER_PASSWORD}
+
+#route:
+#  group_by:
+#    - severity
+#  receiver: team-magic-mailer
+#  routes:
+#    - match:
+#        severity: critical
+#      receiver: team-magic-mailer
+#
+#    - receiver: team-magic-mailer
+#      # Add a default route to handle alerts not matching any specific route
+#      routes:
+#        - receiver: team-magic-mailer
+
+route:
+  receiver: 'team-magic-mailer'
+  group_by: ['cpu_usage_alerts']
+  group_wait: 10s
+  group_interval: 5m
+  repeat_interval: 1h
+
+receivers:
+  - name: 'team-magic-mailer'
+    email_configs:
+      - to: codingfrancis100@gmail.com
+        send_resolved: true
+
+#inhibit_rules:
+#  - source_match:
+#      severity: critical
+#    target_match:
+#      severity: warning
+#    equal:
+#      - alertname
+#      - dev
+#      - instance
